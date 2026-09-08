@@ -114,6 +114,6 @@ form.onsubmit = async event => {
     form.classList.add('hidden');
   } catch (error) {
     status.className = 'error';
-    status.textContent = 'That time is no longer available. Please choose another one.';
+    status.textContent = error.message || 'Booking could not be completed. Please choose another time.';
   }
 };
