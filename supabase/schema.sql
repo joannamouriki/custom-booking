@@ -10,3 +10,12 @@ create table bookings (
 
 alter table bookings enable row level security;
 -- Only server-side functions will access this table; do not add public policies.
+
+create table if not exists google_tokens (
+  id text primary key check (id = 'primary'),
+  refresh_token text not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table google_tokens enable row level security;
+-- Only Netlify's server-side functions use this table; do not add public policies.

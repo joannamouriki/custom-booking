@@ -1,2 +1,10 @@
-export default async () => Response.json({ slots: [] }, { status: 503 });
-// Next: query Google Calendar free/busy and return 30-minute Europe/Zurich slots.
+import { availableSlots } from './_calendar.mjs';
+
+export default async () => {
+  try {
+    return Response.json({ slots: await availableSlots() }, { headers: { 'cache-control': 'no-store' } });
+  } catch (error) {
+    console.error(error);
+    return Response.json({ error: error.message }, { status: 503 });
+  }
+};
