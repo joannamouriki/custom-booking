@@ -47,7 +47,8 @@ async function supabase(path, options = {}) {
     }
   });
   if (!response.ok) throw new Error(`Database request failed (${response.status}).`);
-  return response.status === 204 ? null : response.json();
+  const body = await response.text();
+  return body ? JSON.parse(body) : null;
 }
 
 export async function googleAccessToken() {
