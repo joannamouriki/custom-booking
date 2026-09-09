@@ -150,7 +150,7 @@ export async function reserveBooking(startAt, attendeeName, attendeeEmail) {
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         summary: 'Interview',
-        description: 'Interview with Ioanna Mouriki.',
+        description: `Interview with Ioanna Mouriki.\n\nNeed to cancel or reschedule?\n${siteUrl()}/manage.html?token=${booking.manage_token}`,
         start: { dateTime: start.toISOString(), timeZone: ZONE },
         end: { dateTime: end.toISOString(), timeZone: ZONE },
         attendees: [{ email: attendeeEmail, displayName: attendeeName }],
@@ -164,11 +164,41 @@ export async function reserveBooking(startAt, attendeeName, attendeeEmail) {
       method: 'PATCH', headers: { Prefer: 'return=minimal' },
       body: JSON.stringify({ google_event_id: event.id, meet_url: meetUrl })
     });
-    return { meetUrl };
+    return { meetUrl, manageUrl: `${siteUrl()}/manage.html?token=${booking.manage_token}` };
   } catch (error) {
     await supabase(`/rest/v1/bookings?id=eq.${booking.id}`, { method: 'DELETE' });
     throw error;
   }
+}
+
+export async function bookingForToken(token) {
+  const rows = await supabase(`/rest/v1/bookings?manage_token=eq.${encodeURIComponent(token)}&select=id,start_at,attendee_name,google_event_id,meet_url`);
+  return rows[0] || null;
+}
+
+export async function cancelBooking(token) {
+  const booking = await bookingForToken(token);
+  if (!booking) { const error = new Error('This booking link is no longer valid.'); error.status = 404; throw error; }
+  const accessToken = await googleAccessToken();
+  const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(booking.google_event_id)}?sendUpdates=all`, { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!response.ok && response.status !== 410) throw new Error('Google Calendar could not cancel this event.');
+  await supabase(`/rest/v1/bookings?id=eq.${booking.id}`, { method: 'DELETE' });
+}
+
+export async function rescheduleBooking(token, startAt) {
+  const booking = await bookingForToken(token);
+  if (!booking) { const error = new Error('This booking link is no longer valid.'); error.status = 404; throw error; }
+  const slots = await availableSlots();
+  if (!slots.includes(startAt)) { const error = new Error('That time is no longer available.'); error.status = 409; throw error; }
+  const accessToken = await googleAccessToken();
+  const start = new Date(startAt);
+  const end = new Date(start.getTime() + SESSION_MINUTES * 60_000);
+  const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(booking.google_event_id)}?sendUpdates=all`, {
+    method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ start: { dateTime: start.toISOString(), timeZone: ZONE }, end: { dateTime: end.toISOString(), timeZone: ZONE } })
+  });
+  if (!response.ok) throw new Error('Google Calendar could not reschedule this event.');
+  await supabase(`/rest/v1/bookings?id=eq.${booking.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ start_at: startAt }) });
 }
 
 export async function saveGoogleRefreshToken(refreshToken) {
