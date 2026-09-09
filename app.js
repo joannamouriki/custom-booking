@@ -6,9 +6,11 @@ const form = document.querySelector('#form');
 const timePicker = document.querySelector('#time-picker');
 const monthLabel = document.querySelector('#month-label');
 const dayLabel = document.querySelector('#day-label');
+const confirmBooking = document.querySelector('#confirm-booking');
 
 let available = [];
 let selected;
+let isSubmitting = false;
 let visibleMonth = new Date();
 visibleMonth.setDate(1);
 
@@ -98,7 +100,10 @@ document.querySelector('#next').onclick = () => { visibleMonth.setMonth(visibleM
 
 form.onsubmit = async event => {
   event.preventDefault();
-  if (!selected) return;
+  if (!selected || isSubmitting) return;
+  isSubmitting = true;
+  confirmBooking.disabled = true;
+  confirmBooking.textContent = 'Confirming your booking…';
   status.className = '';
   status.textContent = 'Confirming your booking…';
   try {
@@ -113,6 +118,9 @@ form.onsubmit = async event => {
     timePicker.classList.add('hidden');
     form.classList.add('hidden');
   } catch (error) {
+    isSubmitting = false;
+    confirmBooking.disabled = false;
+    confirmBooking.textContent = 'Confirm booking →';
     status.className = 'error';
     status.textContent = error.message || 'Booking could not be completed. Please choose another time.';
   }

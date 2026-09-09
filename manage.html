@@ -1,1 +1,25 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manage booking</title><style>body{margin:0;background:#faf9f6;color:#191c22;font:16px Arial,sans-serif}.wrap{max-width:680px;margin:60px auto;padding:0 24px}h1{font:42px Georgia,serif;margin:0 0 12px}.card{border:1px solid #191c22;background:#fff;padding:28px;margin-top:28px}.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.slot,button{padding:12px;border:1px solid #191c22;background:#fff;font:inherit;cursor:pointer}.slot.selected{background:#e8edf2}.primary{background:#1b2a3d;color:#fff;width:100%}.danger{color:#9e2530;border-color:#9e2530;margin-top:18px}.hidden{display:none}.error{color:#9e2530;font-weight:bold}.success{color:#185c3c;font-weight:bold}</style></head><body><main class="wrap"><p>INTERVIEW BOOKING</p><h1>Manage your booking</h1><p id="status">Loading your booking…</p><section id="content" class="card hidden"><p id="current"></p><h2>Reschedule</h2><div id="slots" class="slots"></div><button id="reschedule" class="primary" disabled>Confirm new time</button><button id="cancel" class="danger">Cancel booking</button></section></main><script src="manage.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manage your interview</title>
+  <style>
+    :root{--ink:#191c22;--paper:#faf9f6;--line:#d8d5cd;--grey:#6b6d6b;--gold:#9c7a3c;--navy:#1b2a3d;--red:#a33131;--green:#185c3c}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Helvetica,Arial,sans-serif}.wrap{width:min(calc(100% - 64px),1120px);margin:0 auto;padding:64px 0}.label{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--gold);font-weight:600}.heading{padding-bottom:28px;border-bottom:1px solid var(--line)}h1,h2,h3{font-family:Georgia,serif;font-weight:400}h1{font-size:clamp(40px,6vw,58px);line-height:1.05;margin:8px 0 12px}.heading p{margin:0;color:var(--grey);line-height:1.5}.card{border:1px solid var(--ink);background:#fff;padding:28px;margin-top:28px}.current{font-size:18px;margin:6px 0}.current strong{display:block;font:26px Georgia,serif;margin-top:7px}.booking-main{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:46px;margin-top:38px}.month-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.month-row h2{font-size:25px;margin:0}.month-nav{border:1px solid var(--line);background:#fff;padding:7px 11px;cursor:pointer;font:inherit}.calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.calendar-weekdays{margin-bottom:7px;color:var(--grey);font-size:11px;text-align:center}.day{min-height:48px;border:1px solid transparent;background:transparent;font:inherit;color:var(--grey)}.day.available{border-color:var(--line);background:#fff;color:var(--ink);cursor:pointer}.day.available:hover,.day.active{border-color:var(--navy);background:#e8edf2}.day.disabled{opacity:.32}.slot-title{font-weight:600;margin:0 0 12px}.slot-list{display:grid;gap:8px}.slot{padding:12px;border:1px solid var(--line);background:#fff;cursor:pointer;text-align:left;font:inherit}.slot.selected{border-color:var(--navy);background:#e8edf2}.primary{width:100%;margin-top:18px;padding:15px 18px;border:1px solid var(--ink);background:linear-gradient(135deg,#26384e,#171e28);color:var(--paper);font:600 14px Helvetica,Arial,sans-serif;cursor:pointer}.primary:disabled{opacity:.65;cursor:wait}.danger{width:100%;margin-top:14px;padding:12px 18px;border:1px solid var(--red);background:transparent;color:var(--red);font:600 14px Helvetica,Arial,sans-serif;cursor:pointer}.hidden{display:none}.error{color:var(--red);font-weight:600}.success{color:var(--green);font-weight:600}@media(max-width:760px){.wrap{width:min(calc(100% - 40px),1120px);padding:40px 0}.booking-main{grid-template-columns:1fr;gap:30px}.card{padding:22px}.day{min-height:43px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="heading"><p class="label">Interview booking</p><h1>Manage your booking</h1><p>Choose a new time or cancel your interview.</p></header>
+    <p id="status">Loading your booking…</p>
+    <section id="content" class="hidden">
+      <div class="card"><p class="label">Your current interview</p><p id="current" class="current"></p></div>
+      <div class="booking-main">
+        <section><div class="month-row"><button id="previous" class="month-nav" aria-label="Previous month">←</button><h2 id="month-label"></h2><button id="next" class="month-nav" aria-label="Next month">→</button></div><div class="calendar-weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div id="calendar" class="calendar-grid"></div></section>
+        <aside><p class="label">Reschedule</p><p id="day-label" class="slot-title">Choose an available day.</p><div id="slots" class="slot-list"></div><button id="reschedule" class="primary" disabled>Confirm new time</button><button id="cancel" class="danger">Cancel booking</button></aside>
+      </div>
+    </section>
+  </main>
+  <script src="manage.js"></script>
+</body>
+</html>
