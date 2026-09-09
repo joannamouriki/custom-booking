@@ -36,6 +36,44 @@ const localTime = (date, hour, minute = 0) => {
 const weekday = (date) => new Date(`${date}T12:00:00Z`).getUTCDay();
 const overlaps = (start, end, blockStart, blockEnd) => start < blockEnd && end > blockStart;
 
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+}[character]));
+
+const hostDateTime = (date) => new Intl.DateTimeFormat('en-GB', {
+  timeZone: ZONE, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', hour12: false
+}).format(date);
+
+async function notifyHost({ booking, start, meetUrl }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const hostEmail = process.env.HOST_EMAIL;
+  if (!apiKey || !hostEmail) return;
+
+  const when = hostDateTime(start);
+  const name = escapeHtml(booking.attendee_name);
+  const email = escapeHtml(booking.attendee_email);
+  const meeting = meetUrl ? `<p><a href="${escapeHtml(meetUrl)}">Join Google Meet</a></p>` : '';
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': `booking-${booking.id}`
+    },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM || 'Interview booking <onboarding@resend.dev>',
+      to: [hostEmail],
+      reply_to: booking.attendee_email,
+      subject: `New interview booking — ${when}`,
+      html: `<h2>New interview booking</h2><p><strong>${name}</strong> booked an interview.</p><p><strong>When:</strong> ${escapeHtml(when)} (Zurich time)<br><strong>Email:</strong> ${email}</p>${meeting}`
+    })
+  });
+
+  if (!response.ok) console.error('Host notification email could not be sent.', await response.text());
+}
+
 async function supabase(path, options = {}) {
   const response = await fetch(`${env('SUPABASE_URL')}${path}`, {
     ...options,
@@ -164,6 +202,7 @@ export async function reserveBooking(startAt, attendeeName, attendeeEmail) {
       method: 'PATCH', headers: { Prefer: 'return=minimal' },
       body: JSON.stringify({ google_event_id: event.id, meet_url: meetUrl })
     });
+    await notifyHost({ booking, start, meetUrl });
     return { meetUrl, manageUrl: `${siteUrl()}/manage.html?token=${booking.manage_token}` };
   } catch (error) {
     await supabase(`/rest/v1/bookings?id=eq.${booking.id}`, { method: 'DELETE' });
